@@ -12,11 +12,29 @@ export function Todos() {
 
   const { mutateAsync: postTodoFn } = useMutation<Task, Error, string>({
     mutationFn: postTodo,
-    onSuccess: (result) => {
+    onMutate: (variables) => {
+      const newTask: Task = {
+        id: Math.floor(Math.random() * 1000000),
+        title: variables,
+        completed: false,
+        userId: 1,
+        status: 'pending'
+      }
       queryClient.setQueryData(['todos'], (data: Task[]) => {
-        return [...(data || []), result]
+        return [...(data || []), newTask]
       })
     },
+
+    onSuccess: (data) => {
+      queryClient.setQueryData(['todos'], (oldData: Task[]) => {
+        return oldData.map((task) => {
+          if (task.status === 'pending' && data.title === task.title) {
+            return data
+          }
+          return task
+        })
+      })
+    }
   })
 
   if (isLoading) {
